@@ -1,5 +1,5 @@
 -- NAMES: TJ Stein and Adam Stenson
--- ASSIGNMENT: project
+-- ASSIGNMENT: final project (traffic light controller)
 -- DATE: 5/1
 
 -- Library import stuff
@@ -7,18 +7,21 @@ LIBRARY ieee;
 USE ieee.std_logic_1164.all;
 USE ieee.numeric_std.all;
 
+-- The main entity of the project. Contains the port mappings to the board, 
+-- with clock for timing, switches for control, red LEDs for light outputs
+-- and the 8 HEX displays for information output as well.
 ENTITY project IS
-	PORT(	CLOCK_50: 	IN		STD_LOGIC;
-			SW		: 	IN 		STD_LOGIC_VECTOR(17 DOWNTO 0);
-			LEDR	: 	OUT 	STD_LOGIC_VECTOR(17 DOWNTO 0);
-			HEX0 	: 	OUT 	STD_LOGIC_VECTOR(0 TO 6);
-			HEX1	:	OUT		STD_LOGIC_VECTOR(0 TO 6);
-			HEX2 	: 	OUT 	STD_LOGIC_VECTOR(0 TO 6);
-			HEX3	:	OUT		STD_LOGIC_VECTOR(0 TO 6);
-			HEX4 	: 	OUT 	STD_LOGIC_VECTOR(0 TO 6);
-			HEX5 	: 	OUT 	STD_LOGIC_VECTOR(0 TO 6);
-			HEX6 	: 	OUT 	STD_LOGIC_VECTOR(0 TO 6);
-			HEX7 	: 	OUT 	STD_LOGIC_VECTOR(0 TO 6));
+	PORT(	CLOCK_50	: 	IN		STD_LOGIC;
+			SW			: 	IN 	STD_LOGIC_VECTOR(17 DOWNTO 0);
+			LEDR		: 	OUT 	STD_LOGIC_VECTOR(17 DOWNTO 0);
+			HEX0 		: 	OUT 	STD_LOGIC_VECTOR(0 TO 6);
+			HEX1		:	OUT	STD_LOGIC_VECTOR(0 TO 6);
+			HEX2 		: 	OUT 	STD_LOGIC_VECTOR(0 TO 6);
+			HEX3		:	OUT	STD_LOGIC_VECTOR(0 TO 6);
+			HEX4 		: 	OUT 	STD_LOGIC_VECTOR(0 TO 6);
+			HEX5 		: 	OUT 	STD_LOGIC_VECTOR(0 TO 6);
+			HEX6 		: 	OUT 	STD_LOGIC_VECTOR(0 TO 6);
+			HEX7 		: 	OUT 	STD_LOGIC_VECTOR(0 TO 6));
 END project;
 
 ARCHITECTURE behavior OF project IS
@@ -80,10 +83,10 @@ BEGIN
 				IF (SW(17) = '0') THEN
 					seconds_left <= seconds_left -1;
 					if (seconds_left <= 0) THEN
-						IF (((SW(12) = '1' OR SW(4) = '1') AND east = '1') OR
-							((SW(8) = '1' OR SW(0) = '1') AND north = '1')) THEN
+						IF (((SW(3) = '1' OR SW(1) = '1') AND east = '1') OR
+							((SW(2) = '1' OR SW(0) = '1') AND north = '1')) THEN
 							seconds_left <= 30;
-							IF (SW(12) = '1' AND SW(4) = '1' AND east = '1') THEN
+							IF (SW(3) = '1' AND SW(1) = '1' AND east = '1') THEN
 								north <= '0';
 								south <= '0';
 								east <= '0';
@@ -92,7 +95,7 @@ BEGIN
 								south_left <= '1';
 								east_left <= '0';
 								west_left <= '0';
-							ELSIF ((SW(8) = '1' AND SW(0) = '1') AND north = '1') THEN
+							ELSIF ((SW(2) = '1' AND SW(0) = '1') AND north = '1') THEN
 								north <= '0';
 								south <= '0';
 								east <= '0';
@@ -101,7 +104,7 @@ BEGIN
 								south_left <= '0';
 								east_left <= '1';
 								west_left <= '1';
-							ELSIF (SW(12) = '1' AND east = '1')THEN
+							ELSIF (SW(3) = '1' AND east = '1')THEN
 								north <= '1';
 								south <= '0';
 								east <= '0';
@@ -110,7 +113,7 @@ BEGIN
 								south_left <= '0';
 								east_left <= '0';
 								west_left <= '0';
-							ELSIF (SW(8) = '1' AND north = '1')THEN
+							ELSIF (SW(2) = '1' AND north = '1')THEN
 								north <= '0';
 								south <='0';
 								east<= '1';
@@ -119,7 +122,7 @@ BEGIN
 								south_left <='0';
 								east_left <='1';
 								west_left <='0';
-							ELSIF (SW(4) = '1' AND east = '1')THEN
+							ELSIF (SW(1) = '1' AND east = '1')THEN
 								north <='0';
 								south <='1';
 								east <='0';
@@ -134,7 +137,7 @@ BEGIN
 								east <='0';
 								west <='1';
 								north_left <='0';
-								south_left <='1';
+								south_left <='0';
 								east_left <='0';
 								west_left <='1';
 							END IF;
@@ -278,8 +281,8 @@ USE IEEE.NUMERIC_STD.ALL;
 ENTITY direction_hex IS
 	PORT (	clk_50 									: IN std_logic;
 				n, s, e, w, nl, sl, el, wl, rr 	: IN std_logic;
-				DISPLAY0: OUT std_logic_vector(0 to 6);
-				DISPLAY1: OUT std_logic_vector(0 to 6));
+				DISPLAY0									: OUT std_logic_vector(0 to 6);
+				DISPLAY1									: OUT std_logic_vector(0 to 6));
 END direction_hex;
 
 ARCHITECTURE Behavior OF direction_hex IS
