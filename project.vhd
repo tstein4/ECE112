@@ -191,14 +191,12 @@ BEGIN
 					south_left <= '0';
 					east_left <= '0';
 					west_left <= '0';
+					count <= 0;
+					seconds_left <= 0;
 				END IF;
 			ELSE
 				count <= count + 1;
 			END IF;
-	    ELSIF(SW(17)'EVENT AND SW(17) = '1') THEN
-	    	--SW(17) <= '1';
-	    ELSIF(SW(17)'EVENT AND SW(17) = '0') THEN
-	    	--SW(17) <= '0';
 	    END IF;
 	END PROCESS;
 END;
@@ -223,14 +221,19 @@ BEGIN
 	PROCESS (clk_50)
 	BEGIN
 		if (clk_50'EVENT and rising_edge(clk_50)) then
-			if (count >= 50000000) then
-				count <= 0;
-				seconds_left <= seconds_left -1;
-				if (seconds_left <= 0) then
-					seconds_left <= 30;
+			if (rr = '0') then
+				if (count >= 50000000) then
+					count <= 0;
+					seconds_left <= seconds_left -1;
+					if (seconds_left <= 0) then
+						seconds_left <= 30;
+					end if;
+				elsE
+					count <= count + 1;
 				end if;
 			elsE
-				count <= count + 1;
+				count <= 0;
+				seconds_left <= 5;
 			end if;
 		end if;
 		ones <= seconds_left mod 10;
@@ -238,7 +241,7 @@ BEGIN
 		CASE ones IS
 			WHEN 0 => DISPLAY0 <= "0000001";
 			WHEN 1 => DISPLAY0 <= "1001111";
-			WHEN 2 => DISPLAY0 <= "1010010";
+			WHEN 2 => DISPLAY0 <= "0010010";
 			WHEN 3 => DISPLAY0 <= "0000110";
 			WHEN 4 => DISPLAY0 <= "1001100";
 			WHEN 5 => DISPLAY0 <= "0100100";
@@ -251,7 +254,7 @@ BEGIN
 		CASE tens IS
 			WHEN 0 => DISPLAY1 <= "0000001";
 			WHEN 1 => DISPLAY1 <= "1001111";
-			WHEN 2 => DISPLAY1 <= "1010010";
+			WHEN 2 => DISPLAY1 <= "0010010";
 			WHEN 3 => DISPLAY1 <= "0000110";
 			WHEN 4 => DISPLAY1 <= "1001100";
 			WHEN 5 => DISPLAY1 <= "0100100";
@@ -274,8 +277,8 @@ USE IEEE.STD_LOGIC_1164.ALL;
 USE IEEE.NUMERIC_STD.ALL;
 
 ENTITY direction_hex IS
-	PORT (	clk_50 								: IN std_logic;
-				n, s, e, w, nl, sl, el, wl, rr : IN std_logic;
+	PORT (	clk_50 									: IN std_logic;
+				n, s, e, w, nl, sl, el, wl, rr 	: IN std_logic;
 				DISPLAY0: OUT std_logic_vector(0 to 6);
 				DISPLAY1: OUT std_logic_vector(0 to 6));
 END direction_hex;
@@ -288,14 +291,19 @@ BEGIN
 	PROCESS (clk_50)
 	BEGIN
 		if (clk_50'EVENT and rising_edge(clk_50)) then
-			if (count >= 50000000) then
-				count <= 0;
-				seconds_left <= seconds_left -1;
-				if (seconds_left <= 0) then
-					seconds_left <= 30;
+			if (rr = '0') then
+				if (count >= 50000000) then
+					count <= 0;
+					seconds_left <= seconds_left -1;
+					if (seconds_left <= 0) then
+						seconds_left <= 30;
+					end if;
+				elsE
+					count <= count + 1;
 				end if;
 			elsE
-				count <= count + 1;
+				count <= 0;
+				seconds_left <= 5;
 			end if;
 		end if;
 		if ((seconds_left mod 2) = 0) THEN
@@ -311,14 +319,15 @@ BEGIN
 		disS1 <= (n AND s) OR (nl AND sl AND NOT(odd));
 		disW1 <= (e AND w) OR (el AND wl AND NOT(odd));
 		disL1 <= NOT(disS1 OR disW1);
-		DISPLAY0(0) <= disW0 OR disL0;
-		DISPLAY0(0) <= disN0 OR disW0 OR disL0;
+		DISPLAY0(0) <= disW0 OR disL0 or disN0;
 		DISPLAY0(1) <= disN0 OR disS0 OR disE0 OR disL0;
 		DISPLAY0(2) <= disE0 OR disW0 OR disL0;
 		DISPLAY0(3) <= disN0;
 		DISPLAY0(4) <= disS0 OR disW0;
 		DISPLAY0(5) <= disN0;
 		DISPLAY0(6) <= disW0 OR disL0;
+		
+		DISPLAY1(0) <= disW1 OR disL1;
 		DISPLAY1(1) <= disS1 OR disL1;
 		DISPLAY1(2) <= disW1 OR disL1;
 		DISPLAY1(3) <= '0';
@@ -346,24 +355,31 @@ BEGIN
 	PROCESS (clk_50)
 	BEGIN
 		if (clk_50'EVENT and rising_edge(clk_50)) then
-			if (count >= 50000000) then
-				count <= 0;
-				seconds_left <= seconds_left -1;
-				if (seconds_left <= 0) then
-					seconds_left <= 30;
+			if (rr = '0') then
+				if (count >= 50000000) then
+					count <= 0;
+					seconds_left <= seconds_left -1;
+					if (seconds_left <= 0) then
+						seconds_left <= 30;
+					end if;
+				elsE
+					count <= count + 1;
 				end if;
 			elsE
-				count <= count + 1;
+				count <= 0;
+				seconds_left <= 5;
 			end if;
 		end if;
 		cross <= not(dir) AND not(dir_l);
 		if (cross = '0') THEN
 			DISPLAY <= "1001000";
+		ELSIF (rr = '1') THEN
+			DISPLAY <= "1111111";
 		ELSE
 			CASE seconds_left IS
 				WHEN 0 => DISPLAY <= "0000001";
 				WHEN 1 => DISPLAY <= "1001111";
-				WHEN 2 => DISPLAY <= "1010010";
+				WHEN 2 => DISPLAY <= "0010010";
 				WHEN 3 => DISPLAY <= "0000110";
 				WHEN 4 => DISPLAY <= "1001100";
 				WHEN 5 => DISPLAY <= "0100100";
@@ -396,14 +412,19 @@ BEGIN
 	PROCESS (clk_50)
 	BEGIN
 		if (clk_50'EVENT and rising_edge(clk_50)) then
-			if (count >= 50000000) then
-				count <= 0;
-				seconds_left <= seconds_left -1;
-				if (seconds_left <= 0) then
-					seconds_left <= 30;
+			if (rr = '0') then
+				if (count >= 50000000) then
+					count <= 0;
+					seconds_left <= seconds_left -1;
+					if (seconds_left <= 0) then
+						seconds_left <= 30;
+					end if;
+				elsE
+					count <= count + 1;
 				end if;
 			elsE
-				count <= count + 1;
+				count <= 0;
+				seconds_left <= 5;
 			end if;
 		end if;
 		IF (dir = '0') THEN
@@ -413,7 +434,9 @@ BEGIN
 				temp <= "1000";
 			END IF;
 		ELSE
-			IF (seconds_left > 5) THEN
+			IF (rr = '1') THEN
+				temp <= "0010";
+			ELSIF (seconds_left > 5) THEN
 				IF (dir_l = '1') THEN
 					temp <= "0011";
 				ELSE
