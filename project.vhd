@@ -11,7 +11,6 @@ ENTITY project IS
 	PORT(	CLOCK_50: 	IN		STD_LOGIC;
 			SW		: 	IN 		STD_LOGIC_VECTOR(17 DOWNTO 0);
 			LEDR	: 	OUT 	STD_LOGIC_VECTOR(17 DOWNTO 0);
-			LEDG 	: 	OUT 	STD_LOGIC_VECTOR(7 DOWNTO 0);
 			HEX0 	: 	OUT 	STD_LOGIC_VECTOR(0 TO 6);
 			HEX1	:	OUT		STD_LOGIC_VECTOR(0 TO 6);
 			HEX2 	: 	OUT 	STD_LOGIC_VECTOR(0 TO 6);
@@ -192,7 +191,7 @@ BEGIN
 					east_left <= '0';
 					west_left <= '0';
 					count <= 0;
-					seconds_left <= 0;
+					seconds_left <= 5;
 				END IF;
 			ELSE
 				count <= count + 1;
