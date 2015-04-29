@@ -22,9 +22,6 @@ ENTITY project IS
 			HEX7 	: 	OUT 	STD_LOGIC_VECTOR(0 TO 6));
 END project;
 
--- Define the function of the circuit.
--- defines the component of the johnson_counter,
--- and a signal holding the LED values.
 ARCHITECTURE behavior OF project IS
 	COMPONENT hex_num
 		GENERIC (x : integer);
@@ -33,8 +30,21 @@ ARCHITECTURE behavior OF project IS
 
 	COMPONENT direction_hex
 		GENERIC (x : integer);
-		PORT (	DISPLAY0 : OUT std_logic_vector(0 to 6);
-				DISPLAY1 : OUT std_logic_vector(0 to 6));
+		PORT (	n, s, e, w, nl, sl, el, wl, rr : IN std_logic;
+				DISPLAY0: OUT std_logic_vector(0 to 6);
+				DISPLAY1: OUT std_logic_vector(0 to 6));
+	END COMPONENT;
+
+	COMPONENT crosswalk_hex IS
+		GENERIC (x	: integer);
+		PORT (	dir, dir_l, rr : IN std_logic;
+				DISPLAY: OUT std_logic_vector(0 to 6));
+	END COMPONENT;
+
+	COMPONENT lights IS
+		GENERIC (x	: integer);
+		PORT (	dir, dir_l, rr : IN std_logic;
+				DATA_OUT: OUT std_logic_vector(3 downto 0));
 	END COMPONENT;
 
 	SIGNAL count 				: integer RANGE 0 to 50000000;
@@ -54,40 +64,167 @@ BEGIN
 						PORT MAP (HEX5);
 	ones_hex_display: hex_num GENERIC MAP(seconds_left mod 10)
 						PORT MAP (HEX4);
+	dir_display			: direction_hex GENERIC MAP(seconds_left)
+						PORT MAP (north, south, east, west, north_left, south_left, east_left, west_left, railroad, HEX7, HEX6);
+	north_cross_display : crosswalk_hex GENERIC MAP(seconds_left)
+						PORT MAP (north, north_left, railroad, HEX3);
+	east_cross_display 	: crosswalk_hex GENERIC MAP(seconds_left)
+						PORT MAP (east, east_left, railroad, HEX2);
+	south_cross_display : crosswalk_hex GENERIC MAP(seconds_left)
+						PORT MAP (south, south_left, railroad, HEX1);
+	west_cross_display 	: crosswalk_hex GENERIC MAP(seconds_left)
+						PORT MAP (west, west_left, railroad, HEX0);
+	north_lights		: lights GENERIC MAP(seconds_left)
+						PORT MAP (north, north_left, railroad, LEDR(15 DOWNTO 12));
+	east_lights			: lights GENERIC MAP(seconds_left)
+						PORT MAP (east, east_left, railroad, LEDR(11 DOWNTO 8));
+	south_lights		: lights GENERIC MAP(seconds_left)
+						PORT MAP (south, south_left, railroad, LEDR(7 DOWNTO 4));
+	west_lights			: lights GENERIC MAP(seconds_left)
+						PORT MAP (west, west_left, railroad, LEDR(3 DOWNTO 0));
 
-	PROCESS(CLOCK_50)
+	PROCESS(CLOCK_50, SW(17), SW(12), SW(8), SW(4), SW(0))
 	BEGIN
 	    IF( CLOCK_50'EVENT AND rising_edge(CLOCK_50) ) THEN
 			IF (count = 50000000) THEN
 				count <= 0;
-				seconds_left <= seconds_left -1;
-				if (seconds_left = 0) THEN
-					seconds_left <= 30;
-				end if;
+				IF (railroad = '0') THEN
+					seconds_left <= seconds_left -1;
+					if (seconds_left = 0) THEN
+						IF (((SW(12) = '1' OR SW(4) = '1') AND east = '1') OR
+							((SW(8) = '1' OR SW(0) = '1') AND north = '1')) THEN
+							seconds_left <= 40;
+							IF (SW(12) = '1' AND SW(4) = '1' AND east = '1') THEN
+								north <= '0';
+								south <= '0';
+								east <= '0';
+								west <='0';
+								north_left <= '1';
+								south_left <= '1';
+								east_left <= '0';
+								west_left <= '0';
+							ELSIF ((SW(8) = '1' AND SW(0) = '1') AND north = '1') THEN
+								north <= '0';
+								south <= '0';
+								east <= '0';
+								west <= '0';
+								north_left <= '0';
+								south_left <= '0';
+								east_left <= '1';
+								west_left <= '1';
+							ELSIF (SW(12) = '1' AND east = '1')THEN
+								north <= '1';
+								south <= '0';
+								east <= '0';
+								west <= '0';
+								north_left <= '1';
+								south_left <= '0';
+								east_left <= '0';
+								west_left <= '0';
+							ELSIF (SW(8) = '1' AND north = '1')THEN
+								north <= '0';
+								south <='0';
+								east<= '1';
+								west <='0';
+								north_left <='0';
+								south_left <='0';
+								east_left <='1';
+								west_left <='0';
+							ELSIF (SW(4) = '1' AND east = '1')THEN
+								north <='0';
+								south <='1';
+								east <='0';
+								west <='0';
+								north_left <='0';
+								south_left<= '1';
+								east_left <='0';
+								west_left <='0';
+							ELSIF (SW(0) = '1' AND north = '1')THEN
+								north <='0';
+								south <='0';
+								east <='0';
+								west <='1';
+								north_left <='0';
+								south_left <='1';
+								east_left <='0';
+								west_left <='1';
+							END IF;
+						ELSE
+							seconds_left <= 30;
+							IF (north = '1')THEN
+								north <= '0';
+								south <= '0';
+								east <= '1';
+								west <= '1';
+								north_left <= '0';
+								south_left <= '0';
+								east_left <= '0';
+								west_left <= '0';
+							ELSE
+								north <= '1';
+								south <= '1';
+								east <= '0';
+								west <= '0';
+								north_left <= '0';
+								south_left <= '0';
+								east_left <= '0';
+								west_left <= '0';
+							END IF;
+						END IF;
+					ELSIF (seconds_left = 30) THEN
+						IF (west_left = '1' OR east_left = '1') THEN
+							north <= '0';
+							south <= '0';
+							east <= '1';
+							west <= '1';
+							north_left <= '0';
+							south_left <= '0';
+							east_left <= '0';
+							west_left <= '0';
+						ELSE
+							north <= '1';
+							south <= '1';
+							east <= '0';
+							west <= '0';
+							north_left <= '0';
+							south_left <= '0';
+							east_left <= '0';
+							west_left <= '0';
+						END IF;
+					end if;
+				ELSE
+					north <= '0';
+					south <= '0';
+					east <= '1';
+					west <= '1';
+					north_left <= '0';
+					south_left <= '0';
+					east_left <= '0';
+					west_left <= '0';
+				END IF;
 			ELSE
 				count <= count + 1;
 			END IF;
+	    ELSIF(SW(17)'EVENT AND rising_edge(SW(17))) THEN
+	    	railroad <= '1';
+	    ELSIF(SW(17)'EVENT AND falling_edge(SW(17))) THEN
+	    	railroad <= '0';
 	    END IF;
 	END PROCESS;
 END;
 
--- Library stuff.
 LIBRARY IEEE;
 USE IEEE.STD_LOGIC_1164.ALL;
 USE IEEE.NUMERIC_STD.ALL;
 
--- Define the input/output of the Johnson Counter entity.
--- It takes in a clock, and outputs a 4 bit vector.
 ENTITY hex_num IS
 GENERIC (x : integer);
-PORT (DISPLAY : OUT std_logic_vector(0 to 6));
+PORT (	rr 		: IN std_logic;
+		DISPLAY : OUT std_logic_vector(0 to 6));
 END hex_num;
 
--- Define the behavior of the Johnson Counter.
--- Creates 2 signals, a temp 4 bit vector, and
--- a clk, which counts from 0 to 25,000,000.
 ARCHITECTURE Behavioral OF hex_num IS
---Start the actual functionality.
+
 BEGIN
 	PROCESS BEGIN
 		CASE x IS
@@ -103,17 +240,20 @@ BEGIN
 			WHEN 9 => DISPLAY <= "0000100";
 			WHEN OTHERS => DISPLAY <= "1111111";
 		END CASE;
+		if (rr = '1') THEN
+			DISPLAY <= "1111010";
+		END IF;
 	END PROCESS;
 END Behavioral;
 
--- Library stuff.
+
 LIBRARY IEEE;
 USE IEEE.STD_LOGIC_1164.ALL;
 USE IEEE.NUMERIC_STD.ALL;
 
 ENTITY direction_hex IS
 	GENERIC (x	: integer);
-	PORT (	n, s, e, w, nl, sl, el, wl : IN std_logic;
+	PORT (	n, s, e, w, nl, sl, el, wl, rr : IN std_logic;
 			DISPLAY0: OUT std_logic_vector(0 to 6);
 			DISPLAY1: OUT std_logic_vector(0 to 6));
 END direction_hex;
@@ -149,5 +289,79 @@ BEGIN
 		DISPLAY1(4) <= disS1 OR disW1;
 		DISPLAY1(5) <= '0';
 		DISPLAY1(6) <= disW1 OR disL1;
+	END PROCESS;
+END Behavior;
+
+LIBRARY IEEE;
+USE IEEE.STD_LOGIC_1164.ALL;
+USE IEEE.NUMERIC_STD.ALL;
+
+ENTITY crosswalk_hex IS
+	GENERIC (x	: integer);
+	PORT (	dir, dir_l, rr : IN std_logic;
+			DISPLAY: OUT std_logic_vector(0 to 6));
+END crosswalk_hex;
+
+ARCHITECTURE Behavior of crosswalk_hex IS
+	SIGNAL cross: std_logic;
+BEGIN
+	PROCESS BEGIN
+		cross <= not(dir) AND not(dir_l);
+		if (cross = '0') THEN
+			DISPLAY <= "1001000";
+		ELSE
+			CASE x IS
+				WHEN 0 => DISPLAY <= "0000001";
+				WHEN 1 => DISPLAY <= "1001111";
+				WHEN 2 => DISPLAY <= "1010010";
+				WHEN 3 => DISPLAY <= "0000110";
+				WHEN 4 => DISPLAY <= "1001100";
+				WHEN 5 => DISPLAY <= "0100100";
+				WHEN 6 => DISPLAY <= "0100000";
+				WHEN 7 => DISPLAY <= "0001111";
+				WHEN 8 => DISPLAY <= "0000000";
+				WHEN 9 => DISPLAY <= "0000100";
+				WHEN OTHERS => DISPLAY <= "1111111";
+			END CASE;
+		END IF;
+	END PROCESS;
+END Behavior;
+
+LIBRARY IEEE;
+USE IEEE.STD_LOGIC_1164.ALL;
+USE IEEE.NUMERIC_STD.ALL;
+
+ENTITY lights IS
+	GENERIC (x	: integer);
+	PORT (	dir, dir_l, rr : IN std_logic;
+			DATA_OUT: OUT std_logic_vector(3 downto 0));
+END lights;
+
+ARCHITECTURE Behavior of lights IS
+	SIGNAL temp : std_logic_vector(3 downto 0);
+BEGIN
+	DATA_OUT <= temp;
+	PROCESS BEGIN
+		IF (dir = '0') THEN
+			IF (dir_l = '1') THEN
+				temp <= "1001";
+			ELSE
+				temp <= "1000";
+			END IF;
+		ELSE
+			IF (x > 5) THEN
+				IF (dir_l = '1') THEN
+					temp <= "0011";
+				ELSE
+					temp <= "0010";
+				END IF;
+			ELSE
+				IF (dir_l = '1') THEN
+					temp <= "0101";
+				ELSE
+					temp <= "0100";
+				END IF;
+			END IF;
+		END IF;
 	END PROCESS;
 END Behavior;
